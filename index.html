@@ -10,7 +10,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -58,7 +58,7 @@
             <span class="em">THAT ACTUALLY WORK.</span>
           </h1>
           <p class="lede">
-            Software Developer &amp; Desktop Architect based in Sakarya, Turkey. High-performance native suites, background daemon services, reverse-engineered network pipelines, and workstation automation. Creator of AuraPDF Pro &amp; Keystone.
+            Software Developer &amp; Desktop Architect based in Sakarya, Turkey. High-performance native desktop suites, background daemon services, reverse-engineered network pipelines, and workstation automation. Creator of AuraPDF Pro &amp; Keystone.
           </p>
           <div class="cta">
             <a class="btn" href="#works">see my work &darr;</a>
@@ -66,13 +66,10 @@
           </div>
         </div>
 
-        <!-- Interactive CRT Monitor Stage -->
-        <div class="crt-stage">
-          <div class="crt-grid"></div>
-          <div class="osd osd-tl"><i></i><b>CH 01</b><span>SYS.RADAR</span></div>
-          <div class="osd osd-br">SIGNAL ACQUIRED // 60 FPS</div>
-          <canvas id="heroCanvas" class="crt-canvas"></canvas>
-          <div class="crt-scanlines"></div>
+        <!-- Workstation Frame with Real UI -->
+        <div class="workstation-frame">
+          <img src="img/aurapdf_hero.png" alt="AuraPDF Pro Workstation Interface" />
+          <div class="frame-osd">● CH 01 &middot; AURAPDF PRO v2.2.3 &middot; LIVE INTERFACE</div>
         </div>
       </div>
 
@@ -181,19 +178,14 @@
             <div class="ptags">
               <span>Python 3.10+</span><span>PyQt6</span><span>PyMuPDF C++</span><span>Sandwich OCR</span><span>Inno Setup 6</span><span>AcroForms</span>
             </div>
-            <div class="cta" style="margin-top: 18px;">
+            <div class="cta" style="margin-top: 20px;">
               <a class="btn" href="https://github.com/furkanndev/AuraPDF" target="_blank" rel="noopener noreferrer">explore aurapdf repo &rarr;</a>
             </div>
           </div>
           <div class="flag-visual">
-            <div class="monitor">
-              <div class="monitor-screen">
-                <div class="mon-num">01</div>
-                <div class="mon-title">AuraPDF Pro v2.2.3</div>
-                <div class="mon-tag">Direct In-Page PDF Workstation</div>
-                <div class="mon-desc">PyMuPDF C++ rendering engine &bull; On-canvas text reflow &bull; Full AcroForm support &bull; Standalone .exe</div>
-                <div class="mon-foot">STATUS: PRODUCTION BUILD &bull; WINDOWS 10 / 11</div>
-              </div>
+            <div class="workstation-frame">
+              <img src="img/aurapdf_edit.png" alt="AuraPDF Pro Direct Text Editing Engine" />
+              <div class="frame-osd">ON-CANVAS TEXT EDITING ENGINE &bull; PyQt6</div>
             </div>
           </div>
         </article>
@@ -213,19 +205,14 @@
             <div class="ptags">
               <span>Python 3.11+</span><span>PyQt6</span><span>Win32 API</span><span>Winget</span><span>Registry Optimizer</span><span>PyInstaller</span>
             </div>
-            <div class="cta" style="margin-top: 18px;">
+            <div class="cta" style="margin-top: 20px;">
               <a class="btn" href="https://github.com/furkanndev/KeyStone" target="_blank" rel="noopener noreferrer">explore keystone repo &rarr;</a>
             </div>
           </div>
           <div class="flag-visual">
-            <div class="monitor">
-              <div class="monitor-screen">
-                <div class="mon-num">02</div>
-                <div class="mon-title">Keystone v1.0</div>
-                <div class="mon-tag">Automated Post-Install Setup Platform</div>
-                <div class="mon-desc">140+ Winget silent package deployer &bull; Registry state detector &bull; Pre/post format backup manifests</div>
-                <div class="mon-foot">STATUS: STABLE DEPLOYMENT &bull; WINDOWS 10 / 11</div>
-              </div>
+            <div class="workstation-frame">
+              <img src="img/keystone_apps.png" alt="Keystone Software Deployment Platform" />
+              <div class="frame-osd">140+ PACKAGE SILENT WINGET CATALOG</div>
             </div>
           </div>
         </article>
@@ -247,13 +234,16 @@
           <!-- Left Column: Sticky Monitor -->
           <div class="feed-col">
             <div class="monitor">
-              <div class="monitor-screen" id="monScreen">
+              <div class="monitor-media">
+                <img id="monImg" src="img/aurapdf_hero.png" alt="Active Project Preview" />
+              </div>
+              <div class="monitor-overlay">
                 <div class="mon-num" id="monNum">01</div>
                 <div class="mon-title" id="monTitle">AuraPDF Pro</div>
                 <div class="mon-tag" id="monTag">Desktop Workstation &bull; Python &amp; PyQt6</div>
                 <div class="mon-desc" id="monDesc">Acrobat-grade Windows desktop PDF platform. Direct in-page text editing, PyMuPDF C++ rendering, sandwich OCR, AcroForms, Word/Excel conversion, and Inno Setup installer.</div>
-                <div class="mon-foot" style="margin-top: 18px;">
-                  <a id="monLink" href="https://github.com/furkanndev/AuraPDF" target="_blank" rel="noopener noreferrer" style="color: var(--brass-hi); text-decoration: underline;">view on github &rarr;</a>
+                <div style="margin-top: 10px;">
+                  <a id="monLink" href="https://github.com/furkanndev/AuraPDF" target="_blank" rel="noopener noreferrer" style="color: var(--brass-hi); text-decoration: underline; font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em;">EXPLORE ON GITHUB &rarr;</a>
                 </div>
               </div>
               <div class="monitor-snow" id="monSnow"></div>
