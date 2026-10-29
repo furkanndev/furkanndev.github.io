@@ -592,6 +592,21 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
   transition: color 0.25s;
 }
 .prow.on .pt, .prow:hover .pt { color: var(--brass-hi); }
+.repo-ver-tag {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 1px 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--brass-hi);
+  background: rgba(201, 162, 74, 0.12);
+  border: 1px solid var(--hair);
+  border-radius: 2px;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
 .pmeta {
   font-family: var(--mono);
   font-size: 10px;

@@ -1,0 +1,54 @@
+name: Autonomous Repo Release Sync
+
+on:
+  schedule:
+    # Run every 6 hours automatically to check for new releases
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [release-published, sync-versions]
+  push:
+    branches:
+      - master
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/sync-releases.yml'
+
+concurrency:
+  group: sync-releases
+  cancel-in-progress: true
+
+jobs:
+  sync-versions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Sync repository releases and update index.html
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/sync_versions.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet data/ index.html; then
+            git add data/versions.json index.html
+            git commit -m "chore(auto-sync): update repository releases and version telemetry [skip ci]"
+            git push origin master
+          else
+            echo "No version updates detected. Working tree is clean."
+          fi
