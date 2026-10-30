@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-30T00:06:45.764199+00:00",
+  "updated_at": "2026-10-30T07:51:03.911704+00:00",
   "user": {
     "login": "furkanndev",
     "public_repos": 20,
@@ -9,10 +9,10 @@
     "AuraPDF": {
       "repo": "AuraPDF",
       "has_release": true,
-      "latest_version": "v2.2.4",
+      "latest_version": "Pro-v2.2.4",
       "release_name": "AuraPDF Pro v2.2.4",
-      "release_url": "https://github.com/furkanndev/AuraPDF/releases/tag/v2.2.4",
-      "download_url": "https://github.com/furkanndev/AuraPDF/releases/download/v2.2.4/AuraPDF_Pro.v2.2.4.exe",
+      "release_url": "https://github.com/furkanndev/AuraPDF/releases/tag/Pro-v2.2.4",
+      "download_url": "https://github.com/furkanndev/AuraPDF/releases/download/Pro-v2.2.4/AuraPDF_Pro.v2.2.4.exe",
       "asset_name": "AuraPDF_Pro.v2.2.4.exe",
       "published_at": "2026-10-29T23:25:37Z"
     },
