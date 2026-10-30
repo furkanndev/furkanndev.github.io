@@ -124,6 +124,52 @@ const PROJECTS = [
 // Autonomous Live Version & Release Synchronization
 // -----------------------------------------------------------------------------
 
+let activeProjectIdx = 0;
+
+function updateMonitorView(idx, triggerSnow = true) {
+  const p = PROJECTS[idx];
+  if (!p) return;
+
+  const monNum = document.getElementById("monNum");
+  const monTitle = document.getElementById("monTitle");
+  const monTag = document.getElementById("monTag");
+  const monDesc = document.getElementById("monDesc");
+  const monLink = document.getElementById("monLink");
+  const monDownload = document.getElementById("monDownload");
+  const monImg = document.getElementById("monImg");
+  const monSnow = document.getElementById("monSnow");
+  const prows = document.querySelectorAll(".prow");
+
+  if (triggerSnow && monSnow) {
+    monSnow.classList.remove("burst");
+    void monSnow.offsetWidth; // force reflow
+    monSnow.classList.add("burst");
+  }
+
+  if (monImg) monImg.src = p.img;
+  if (monNum) monNum.textContent = p.num;
+  if (monTitle) monTitle.textContent = p.title;
+  if (monTag) {
+    monTag.textContent = p.version ? `${p.tag} · ${p.version}` : p.tag;
+  }
+  if (monDesc) monDesc.textContent = p.desc;
+  if (monLink) monLink.href = p.url;
+
+  if (monDownload) {
+    if (p.downloadUrl) {
+      monDownload.style.display = "inline-block";
+      monDownload.href = p.downloadUrl;
+      monDownload.textContent = p.version ? `DOWNLOAD ${p.version.toUpperCase()} ↓` : "LATEST RELEASE ↓";
+    } else {
+      monDownload.style.display = "none";
+    }
+  }
+
+  prows.forEach((row, i) => {
+    row.classList.toggle("on", i === idx);
+  });
+}
+
 function applyRepoVersion(repoName, version, downloadUrl) {
   if (!version) return;
 
@@ -156,6 +202,10 @@ function applyRepoVersion(repoName, version, downloadUrl) {
       el.innerHTML = `AuraPDF Pro ${version} &mdash; Standalone Windows Suite`;
     } else if (repoName === "KeyStone") {
       el.innerHTML = `Keystone Platform ${version} &mdash; Windows Post-Install Deployment`;
+    } else if (repoName === "Social-Saver") {
+      el.innerHTML = `Social-Saver Pipeline ${version} &mdash; Media Stream Interceptor`;
+    } else {
+      el.innerHTML = `${repoName} ${version} &mdash; Active Release`;
     }
   });
 
@@ -164,10 +214,8 @@ function applyRepoVersion(repoName, version, downloadUrl) {
   badgeEls.forEach((el) => {
     if (repoName === "AuraPDF") {
       el.innerHTML = `release ${version} pro &bull; win x64`;
-    } else if (repoName === "KeyStone") {
-      el.innerHTML = `version ${version} &bull; win x64`;
     } else {
-      el.innerHTML = `release ${version}`;
+      el.innerHTML = `release ${version} &bull; win x64`;
     }
   });
 
@@ -180,15 +228,32 @@ function applyRepoVersion(repoName, version, downloadUrl) {
 
   // 6. Works list version pills
   const tagEls = document.querySelectorAll(`[data-repo-tag="${repoName}"]`);
-  tagEls.forEach((el) => {
-    el.textContent = version;
-  });
+  if (tagEls.length > 0) {
+    tagEls.forEach((el) => {
+      el.textContent = version;
+      el.style.display = "inline-block";
+    });
+  } else {
+    const rowEl = document.querySelector(`.prow[data-repo="${repoName}"] .pt`);
+    if (rowEl) {
+      const span = document.createElement("span");
+      span.className = "repo-ver-tag";
+      span.setAttribute("data-repo-tag", repoName);
+      span.textContent = version;
+      rowEl.appendChild(span);
+    }
+  }
 
   // 7. Update in PROJECTS in-memory dataset
   const proj = PROJECTS.find((p) => p.repo === repoName);
   if (proj) {
     proj.version = version;
     if (downloadUrl) proj.downloadUrl = downloadUrl;
+  }
+
+  // 8. Refresh monitor view if the currently active project was updated
+  if (PROJECTS[activeProjectIdx]?.repo === repoName) {
+    updateMonitorView(activeProjectIdx, false);
   }
 }
 
@@ -211,10 +276,18 @@ async function initAutonomousVersionSync() {
     // localStorage may be disabled in restricted iframe/incognito
   }
 
-  // 1. Immediately apply cached data if available
+  const syncState = {
+    timestamp: Date.now(),
+    rateLimitedUntil: cache?.rateLimitedUntil || 0,
+    lastLiveCheck: cache?.lastLiveCheck || 0,
+    repos: cache?.repos || {},
+    user: cache?.user || { public_repos: 20 }
+  };
+
+  // 1. Immediately apply cached data if available (zero layout shift)
   if (cache && cache.repos) {
     Object.values(cache.repos).forEach((r) => {
-      if (r.latest_version) {
+      if (r && r.latest_version) {
         applyRepoVersion(r.repo, r.latest_version, r.download_url);
       }
     });
@@ -223,84 +296,112 @@ async function initAutonomousVersionSync() {
     }
   }
 
-  // If cache is fresh (< 15 mins), do not aggressively refetch external API
-  const isCacheFresh = cache && cache.timestamp && (Date.now() - cache.timestamp < CACHE_TTL_MS);
-
-  // 2. Load static data/versions.json snapshot (Same-origin, unmetered, always fast)
+  // 2. Load static data/versions.json snapshot (Same-origin Fastly CDN, unmetered)
   try {
     const res = await fetch(`data/versions.json?t=${Date.now()}`);
     if (res.ok) {
       const data = await res.json();
       if (data && data.repos) {
         Object.values(data.repos).forEach((r) => {
-          if (r.latest_version) {
+          if (r && r.latest_version) {
             applyRepoVersion(r.repo, r.latest_version, r.download_url);
+            syncState.repos[r.repo] = {
+              repo: r.repo,
+              latest_version: r.latest_version,
+              download_url: r.download_url
+            };
           }
         });
-        if (data.user && data.user.public_repos) {
-          applyTelemetryStats(data.user.public_repos);
-        }
       }
+      if (data && data.user && data.user.public_repos) {
+        applyTelemetryStats(data.user.public_repos);
+        syncState.user.public_repos = data.user.public_repos;
+      }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(syncState));
+      } catch (e) {}
     }
   } catch (e) {
     // data/versions.json fallback silent
   }
 
-  // If cache is already fresh, we can skip querying GitHub API to avoid rate limits
-  if (isCacheFresh) {
+  // 3. Live GitHub API check (opportunistic query for real-time releases)
+  const now = Date.now();
+
+  // If in rate-limit cooldown, do not query GitHub API
+  if (syncState.rateLimitedUntil && now < syncState.rateLimitedUntil) {
     return;
   }
 
-  // 3. Live GitHub API check for flagships to catch immediate releases within seconds
-  const liveRepos = ["AuraPDF", "KeyStone"];
-  const updatedCache = {
-    timestamp: Date.now(),
-    repos: cache?.repos || {},
-    user: cache?.user || { public_repos: 20 }
-  };
+  // Skip if queried GitHub within the last 5 minutes to preserve rate limits
+  if (syncState.lastLiveCheck && (now - syncState.lastLiveCheck < 5 * 60 * 1000)) {
+    return;
+  }
 
-  for (const repo of liveRepos) {
-    try {
-      const resp = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${repo}/releases/latest`, {
-        headers: { Accept: "application/vnd.github.v3+json" }
-      });
-      if (resp.status === 200) {
-        const rel = await resp.json();
-        const ver = rel.tag_name;
-        const dlUrl = rel.assets && rel.assets.length > 0
-          ? rel.assets[0].browser_download_url
-          : rel.html_url;
+  const liveRepos = ["AuraPDF", "KeyStone", "Social-Saver"];
+  let hitRateLimit = false;
+  let hasLiveSuccess = false;
 
-        if (ver) {
-          applyRepoVersion(repo, ver, dlUrl);
-          updatedCache.repos[repo] = {
-            repo,
-            latest_version: ver,
-            download_url: dlUrl
-          };
+  await Promise.allSettled(
+    liveRepos.map(async (repo) => {
+      if (hitRateLimit) return;
+      try {
+        const resp = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${repo}/releases/latest`, {
+          headers: { Accept: "application/vnd.github.v3+json" }
+        });
+
+        if (resp.status === 403) {
+          hitRateLimit = true;
+          return;
         }
+
+        if (resp.status === 200) {
+          const rel = await resp.json();
+          const ver = rel.tag_name;
+          const dlUrl = rel.assets && rel.assets.length > 0
+            ? rel.assets[0].browser_download_url
+            : rel.html_url;
+
+          if (ver) {
+            hasLiveSuccess = true;
+            applyRepoVersion(repo, ver, dlUrl);
+            syncState.repos[repo] = {
+              repo,
+              latest_version: ver,
+              download_url: dlUrl
+            };
+          }
+        }
+      } catch (e) {
+        // Network failure
       }
-    } catch (e) {
-      // Graceful silence on network error / 403 rate limit
-    }
+    })
+  );
+
+  if (hitRateLimit) {
+    syncState.rateLimitedUntil = now + 15 * 60 * 1000;
+  } else if (hasLiveSuccess) {
+    syncState.lastLiveCheck = now;
   }
 
-  // 4. Update user telemetry stats from GitHub
-  try {
-    const uResp = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}`);
-    if (uResp.status === 200) {
-      const uData = await uResp.json();
-      if (uData.public_repos) {
-        applyTelemetryStats(uData.public_repos);
-        updatedCache.user.public_repos = uData.public_repos;
+  // 4. Update user telemetry stats from GitHub if not rate-limited
+  if (!hitRateLimit) {
+    try {
+      const uResp = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}`);
+      if (uResp.status === 200) {
+        const uData = await uResp.json();
+        if (uData.public_repos) {
+          applyTelemetryStats(uData.public_repos);
+          syncState.user.public_repos = uData.public_repos;
+        }
+      } else if (uResp.status === 403) {
+        syncState.rateLimitedUntil = now + 15 * 60 * 1000;
       }
-    }
-  } catch (e) {
-    // Ignore rate limits
+    } catch (e) {}
   }
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCache));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(syncState));
   } catch (e) {}
 }
 
@@ -309,59 +410,21 @@ async function initAutonomousVersionSync() {
 // -----------------------------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialize monitor with project 0 immediately
+  updateMonitorView(0, false);
+
   // Start autonomous version synchronizer
   initAutonomousVersionSync();
 
   // Interactive Monitor Feed Switching
-  const monNum = document.getElementById("monNum");
-  const monTitle = document.getElementById("monTitle");
-  const monTag = document.getElementById("monTag");
-  const monDesc = document.getElementById("monDesc");
-  const monLink = document.getElementById("monLink");
-  const monDownload = document.getElementById("monDownload");
-  const monImg = document.getElementById("monImg");
-  const monSnow = document.getElementById("monSnow");
   const prows = document.querySelectorAll(".prow");
-
-  function setProject(idx) {
-    const p = PROJECTS[idx];
-    if (!p) return;
-
-    // Trigger CRT snow burst
-    if (monSnow) {
-      monSnow.classList.remove("burst");
-      void monSnow.offsetWidth; // force reflow
-      monSnow.classList.add("burst");
-    }
-
-    if (monImg) monImg.src = p.img;
-    if (monNum) monNum.textContent = p.num;
-    if (monTitle) monTitle.textContent = p.title;
-    if (monTag) {
-      monTag.textContent = p.version ? `${p.tag} · ${p.version}` : p.tag;
-    }
-    if (monDesc) monDesc.textContent = p.desc;
-    if (monLink) monLink.href = p.url;
-
-    if (monDownload) {
-      if (p.downloadUrl) {
-        monDownload.style.display = "inline-block";
-        monDownload.href = p.downloadUrl;
-        monDownload.textContent = p.version ? `DOWNLOAD ${p.version.toUpperCase()} ↓` : "LATEST RELEASE ↓";
-      } else {
-        monDownload.style.display = "none";
-      }
-    }
-
-    prows.forEach((row, i) => {
-      row.classList.toggle("on", i === idx);
-    });
-  }
-
   prows.forEach((row) => {
     row.addEventListener("mouseenter", () => {
       const idx = parseInt(row.dataset.index, 10);
-      setProject(idx);
+      if (!isNaN(idx)) {
+        activeProjectIdx = idx;
+        updateMonitorView(idx, true);
+      }
     });
   });
 

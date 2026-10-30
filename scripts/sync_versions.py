@@ -149,7 +149,7 @@ def fetch_repo_data(existing_data: dict = None, token: str = None):
     return versions_data
 
 def update_static_html(html_path: str, versions_data: dict) -> bool:
-    """Updates index.html static markup with the latest discovered versions."""
+    """Updates index.html static markup with the latest discovered versions across all repositories."""
     if not os.path.isfile(html_path):
         print(f"[!] File not found: {html_path}")
         return False
@@ -160,94 +160,123 @@ def update_static_html(html_path: str, versions_data: dict) -> bool:
     orig_content = content
     repos = versions_data.get("repos", {})
 
-    # AuraPDF updates
-    aurapdf = repos.get("AuraPDF", {})
-    aurapdf_ver = aurapdf.get("latest_version") or "v2.2.4"
-    print(f"[*] Applying AuraPDF version: {aurapdf_ver}")
+    for repo_name in FEATURED_REPOS:
+        repo_info = repos.get(repo_name, {})
+        ver = repo_info.get("latest_version")
+        dl_url = repo_info.get("download_url")
 
-    # Regex replaces
-    # 1. frame-osd: AURAPDF PRO v2.2.x
-    content = re.sub(
-        r'(<div class="frame-osd"[^>]*>● CH 01 &middot; AURAPDF PRO )v[0-9]+(\.[0-9]+)+',
-        rf'\g<1>{aurapdf_ver}',
-        content
-    )
-    # 2. ticker: AURA PDF PRO v2.2.x RELEASED
-    content = re.sub(
-        r'(&bull; AURA PDF PRO )v[0-9]+(\.[0-9]+)+( RELEASED)',
-        rf'\g<1>{aurapdf_ver}\g<3>',
-        content
-    )
-    # 3. now section: AuraPDF Pro v2.2.x &mdash;
-    content = re.sub(
-        r'(<div class="nt"[^>]*>AuraPDF Pro )v[0-9]+(\.[0-9]+)+',
-        rf'\g<1>{aurapdf_ver}',
-        content
-    )
-    # 4. flag card badge: release v2.2.x pro &bull;
-    content = re.sub(
-        r'(<span class="badge-flag"[^>]*>release )v[0-9]+(\.[0-9]+)+( pro &bull;)',
-        rf'\g<1>{aurapdf_ver}\g<3>',
-        content
-    )
-    # 5. repo-tag for AuraPDF
-    content = re.sub(
-        r'(<span class="repo-ver-tag"[^>]*data-repo-tag="AuraPDF"[^>]*>)v[0-9]+(\.[0-9]+)+',
-        rf'\g<1>{aurapdf_ver}',
-        content
-    )
-    # 6. download button for AuraPDF
-    content = re.sub(
-        r'(<a class="btn"[^>]*data-repo-download="AuraPDF"[^>]*>)download v[0-9]+(\.[0-9]+)+',
-        rf'\g<1>download {aurapdf_ver}',
-        content
-    )
-    if aurapdf.get("download_url"):
+        if not ver:
+            continue
+
+        print(f"[*] Applying version for {repo_name}: {ver}")
+
+        # 1. Workstation Frame OSD badge: data-repo-osd="{repo}"
         content = re.sub(
-            r'(<a class="btn"[^>]*href=")[^"]*("[^>]*data-repo-download="AuraPDF")',
-            rf'\g<1>{aurapdf["download_url"]}\g<2>',
+            rf'(<div class="frame-osd"[^>]*data-repo-osd="{re.escape(repo_name)}"[^>]*>● CH 01 &middot; [^<]*?)(?:v[0-9]+(?:\.[0-9]+)*|version [^<]*?)?( &middot; LIVE INTERFACE</div>)',
+            rf'\g<1>{ver}\g<2>',
             content
         )
 
-    # KeyStone updates
-    keystone = repos.get("KeyStone", {})
-    keystone_ver = keystone.get("latest_version") or "v2.0.1"
-    print(f"[*] Applying KeyStone version: {keystone_ver}")
+        # 2. Broadcast Ticker items: data-repo-ticker="{repo}"
+        if repo_name == "AuraPDF":
+            content = re.sub(
+                r'(&bull; AURA PDF PRO )(?:v[0-9]+(?:\.[0-9]+)*|version [^<]*?)( RELEASED)',
+                rf'\g<1>{ver}\g<2>',
+                content
+            )
+        elif repo_name == "KeyStone":
+            content = re.sub(
+                r'(KEYSTONE WORKSTATION DEPLOYMENT SUITE)(?: v[0-9]+(?:\.[0-9]+)*)?',
+                rf'\g<1> {ver}',
+                content
+            )
 
-    # 1. flag card badge: version 1.0 / version v2.0.1
-    content = re.sub(
-        r'(<span class="badge-flag cyan"[^>]*>)(?:version [0-9]+(\.[0-9]+)*|release v[0-9]+(\.[0-9]+)*)',
-        rf'\g<1>version {keystone_ver}',
-        content
-    )
-    # 2. now section for Keystone
-    content = re.sub(
-        r'(<div class="nt"[^>]*>Keystone Platform )(?:v[0-9]+(\.[0-9]+)+ )?',
-        rf'\g<1>{keystone_ver} ',
-        content
-    )
-    # 3. ticker for Keystone
-    content = re.sub(
-        r'(KEYSTONE WORKSTATION DEPLOYMENT SUITE)(?: v[0-9]+(\.[0-9]+)+)?',
-        rf'\g<1> {keystone_ver}',
-        content
-    )
-    # 4. repo-tag for KeyStone
-    content = re.sub(
-        r'(<span class="repo-ver-tag"[^>]*data-repo-tag="KeyStone"[^>]*>)v[0-9]+(\.[0-9]+)+',
-        rf'\g<1>{keystone_ver}',
-        content
-    )
-    # 5. download button for KeyStone
-    content = re.sub(
-        r'(<a class="btn"[^>]*data-repo-download="KeyStone"[^>]*>)download v[0-9]+(\.[0-9]+)+',
-        rf'\g<1>download {keystone_ver}',
-        content
-    )
-    if keystone.get("download_url"):
+        # 3. Currently / Now section: data-repo-now="{repo}"
+        if repo_name == "AuraPDF":
+            content = re.sub(
+                r'(<div class="nt"[^>]*data-repo-now="AuraPDF"[^>]*>AuraPDF Pro )(?:v[0-9]+(?:\.[0-9]+)* )?(&mdash;)',
+                rf'\g<1>{ver} \g<2>',
+                content
+            )
+        elif repo_name == "KeyStone":
+            content = re.sub(
+                r'(<div class="nt"[^>]*data-repo-now="KeyStone"[^>]*>Keystone Platform )(?:v[0-9]+(?:\.[0-9]+)* )?(&mdash;)',
+                rf'\g<1>{ver} \g<2>',
+                content
+            )
+        elif repo_name == "Social-Saver":
+            content = re.sub(
+                r'(<div class="nt"[^>]*data-repo-now="Social-Saver"[^>]*>Social-Saver Pipeline )(?:v[0-9]+(?:\.[0-9]+)* )?(&mdash;)',
+                rf'\g<1>{ver} \g<2>',
+                content
+            )
+
+        # 4. Flagship Card Badges: data-repo-badge="{repo}"
+        if repo_name == "AuraPDF":
+            content = re.sub(
+                rf'(<span class="badge-flag"[^>]*data-repo-badge="{re.escape(repo_name)}"[^>]*>release )v[0-9]+(?:\.[0-9]+)*( pro &bull; win x64</span>)',
+                rf'\g<1>{ver}\g<2>',
+                content
+            )
+        elif repo_name == "KeyStone":
+            content = re.sub(
+                rf'(<span class="badge-flag cyan"[^>]*data-repo-badge="{re.escape(repo_name)}"[^>]*>(?:release|version) )(?:v)?[0-9]+(?:\.[0-9]+)*( &bull; win x64</span>)',
+                rf'\g<1>{ver}\g<2>',
+                content
+            )
+
+        # 5. Flagship Download Buttons: data-repo-download="{repo}"
         content = re.sub(
-            r'(<a class="btn"[^>]*href=")[^"]*("[^>]*data-repo-download="KeyStone")',
-            rf'\g<1>{keystone["download_url"]}\g<2>',
+            rf'(<a class="btn"[^>]*data-repo-download="{re.escape(repo_name)}"[^>]*>)download [^<]+?(</a>)',
+            rf'\g<1>download {ver} &darr;\g<2>',
+            content
+        )
+        if dl_url:
+            content = re.sub(
+                rf'(<a class="btn"[^>]*href=")[^"]*("[^>]*data-repo-download="{re.escape(repo_name)}")',
+                rf'\g<1>{dl_url}\g<2>',
+                content
+            )
+
+        # 6. Selected Works project list version pill: data-repo-tag="{repo}"
+        if f'data-repo-tag="{repo_name}"' in content:
+            content = re.sub(
+                rf'(<span class="repo-ver-tag"[^>]*data-repo-tag="{re.escape(repo_name)}"[^>]*>)[^<]*(</span>)',
+                rf'\g<1>{ver}\g<2>',
+                content
+            )
+        else:
+            # If tag element does not exist yet in index.html for this repo, insert it!
+            pattern = rf'(<li class="prow"[^>]*data-repo="{re.escape(repo_name)}"[^>]*>[\s\S]*?<div class="pt">[^<]+)(</div>)'
+            replacement = rf'\g<1> <span class="repo-ver-tag" data-repo-tag="{repo_name}">{ver}</span>\g<2>'
+            content = re.sub(pattern, replacement, content)
+
+        # 7. Sticky CRT Monitor overlay (sync default project AuraPDF)
+        if repo_name == "AuraPDF":
+            content = re.sub(
+                r'(<div class="mon-tag" id="monTag">Desktop Workstation &bull; Python &amp; PyQt6 &bull; )v[0-9]+(?:\.[0-9]+)*',
+                rf'\g<1>{ver}',
+                content
+            )
+            content = re.sub(
+                r'(<a id="monDownload"[^>]*>)DOWNLOAD V[0-9]+(?:\.[0-9]+)* &darr;',
+                rf'\g<1>DOWNLOAD {ver.upper()} &darr;',
+                content
+            )
+            if dl_url:
+                content = re.sub(
+                    r'(<a id="monDownload"[^>]*href=")[^"]*(")',
+                    rf'\g<1>{dl_url}\g<2>',
+                    content
+                )
+
+    # 8. User Telemetry Stats (public repository counter)
+    user_data = versions_data.get("user", {})
+    public_repos = user_data.get("public_repos")
+    if public_repos:
+        content = re.sub(
+            r'(<b data-telemetry="repos">)\d+(</b>)',
+            rf'\g<1>{public_repos}\g<2>',
             content
         )
 
