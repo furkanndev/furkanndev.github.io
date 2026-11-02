@@ -87,7 +87,7 @@
           <span class="on" data-repo-ticker="AuraPDF">&bull; AURA PDF PRO Pro-v2.2.4 RELEASED</span>
           <span data-repo-ticker="KeyStone">KEYSTONE WORKSTATION DEPLOYMENT SUITE v3.0.2</span>
           <span class="on">&bull; DIRECT IN-PAGE PDF CANVAS ENGINE</span>
-          <span>ANONYMOUS INSTAGRAM CDN MEDIA PIPELINES</span>
+          <span>MEDIA DOWNLOAD PIPELINES</span>
           <span class="on">&bull; LINUX KERNEL INOTIFY AUDIT DAEMONS</span>
           <span>PROCEDURAL 20x20 TARGET SEARCH GAME</span>
           <span class="on">&bull; MODERN C++17 MATRIX TRANSFORMATIONS</span>
@@ -98,7 +98,7 @@
           <span class="on" data-repo-ticker="AuraPDF">&bull; AURA PDF PRO Pro-v2.2.4 RELEASED</span>
           <span data-repo-ticker="KeyStone">KEYSTONE WORKSTATION DEPLOYMENT SUITE v3.0.2</span>
           <span class="on">&bull; DIRECT IN-PAGE PDF CANVAS ENGINE</span>
-          <span>ANONYMOUS INSTAGRAM CDN MEDIA PIPELINES</span>
+          <span>MEDIA DOWNLOAD PIPELINES</span>
           <span class="on">&bull; LINUX KERNEL INOTIFY AUDIT DAEMONS</span>
           <span>PROCEDURAL 20x20 TARGET SEARCH GAME</span>
           <span class="on">&bull; MODERN C++17 MATRIX TRANSFORMATIONS</span>
@@ -116,10 +116,10 @@
             <p class="kick">currently</p>
             <h2 class="h2">What&rsquo;s <em>happening now</em></h2>
           </div>
-          <div class="slate"><b>active dispatch</b></div>
+          <div class="slate"><b data-live-status>active dispatch</b></div>
         </div>
 
-        <ul class="now">
+        <ul class="now" id="nowFeed">
           <li>
             <div class="nw"><b>live</b></div>
             <div>
@@ -137,8 +137,8 @@
           <li>
             <div class="nw cyan"><b>active</b></div>
             <div>
-              <div class="nt" data-repo-now="Social-Saver">Social-Saver Pipeline v1.0 &mdash; Media Stream Interceptor</div>
-              <div class="ns">Maintained zero-receipt Instagram CDN stream extraction (seen = false) and automated session token persistence via embedded desktop webview.</div>
+              <div class="nt" data-repo-now="Social-Saver">Social-Saver Pipeline v1.0 &mdash; Media Downloader</div>
+              <div class="ns">Flask-based media downloader with HTTP session management, in-memory .zip packaging, and original quality preservation.</div>
             </div>
           </li>
           <li>
@@ -280,8 +280,8 @@
                 <span class="pn">03</span>
                 <div>
                   <div class="pt">Social-Saver <span class="repo-ver-tag" data-repo-tag="Social-Saver">v1.0</span></div>
-                  <div class="pmeta">Reverse Eng &bull; Python &bull; Flask &bull; Embedded Webview</div>
-                  <div class="pnote">Anonymous Instagram story &amp; profile media downloader. Direct CDN stream extraction (seen = false) and bulk zip.</div>
+                  <div class="pmeta">Media Tool &bull; Python &bull; Flask &bull; Embedded Webview</div>
+                  <div class="pnote">Media downloader with HTTP session management, bulk .zip packaging, and original quality preservation.</div>
                 </div>
                 <a class="pgo" href="https://github.com/furkanndev/Social-Saver" target="_blank" rel="noopener noreferrer">repo &rarr;</a>
               </li>
@@ -446,19 +446,19 @@
             <p class="kick">telemetry &bull; analytics</p>
             <h2 class="h2">GitHub <em>Telemetry.</em></h2>
           </div>
-          <div class="slate"><b>live metrics</b></div>
+          <div class="slate"><b data-live-status>live metrics</b></div>
         </div>
 
         <div class="statstrip">
           <i><b data-telemetry="repos">20</b> <span>Repositories</span></i>
-          <i><b>2</b> <span>Flagships</span></i>
-          <i><b>140+</b> <span>Deployments</span></i>
-          <i><b>100%</b> <span>Open Source</span></i>
+          <i><b data-telemetry="languages">5+</b> <span>Languages</span></i>
+          <i><b data-telemetry="lastrelease">recently</b> <span>Last release</span></i>
+          <i><b data-telemetry="lastpush">recently</b> <span>Last push</span></i>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
-          <img src="https://github-readme-stats.vercel.app/api?username=furkanndev&show_icons=true&bg_color=08080a&title_color=ebd79b&text_color=ede8df&icon_color=c9a24a&border_color=c9a24a55&hide_border=false&include_all_commits=true&count_private=true" alt="GitHub Stats" width="100%" />
-          <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=furkanndev&layout=compact&bg_color=08080a&title_color=ebd79b&text_color=ede8df&border_color=c9a24a55&hide_border=false" alt="Top Languages" width="100%" />
+          <img onerror="this.remove()" src="https://github-readme-stats.vercel.app/api?username=furkanndev&show_icons=true&bg_color=08080a&title_color=ebd79b&text_color=ede8df&icon_color=c9a24a&border_color=c9a24a55&hide_border=false&include_all_commits=true&count_private=true" alt="GitHub Stats" width="100%" />
+          <img onerror="this.remove()" src="https://github-readme-stats.vercel.app/api/top-langs/?username=furkanndev&layout=compact&bg_color=08080a&title_color=ebd79b&text_color=ede8df&border_color=c9a24a55&hide_border=false" alt="Top Languages" width="100%" />
         </div>
       </div>
     </section>
@@ -499,5 +499,6 @@
   </footer>
 
   <script src="js/app.js"></script>
+  <script src="js/live.js"></script>
 </body>
 </html>

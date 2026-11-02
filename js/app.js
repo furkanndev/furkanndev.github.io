@@ -36,7 +36,7 @@ const PROJECTS = [
     repo: "Social-Saver",
     version: "v1.0",
     tag: "Systems Pipeline · Flask & Webview",
-    desc: "Anonymous Instagram story & profile media viewer. Intercepts direct CDN media streams with zero read receipts (seen = false) and provides automated session cookie capture.",
+    desc: "Flask-based media downloader with HTTP session management, in-memory .zip packaging, and original quality preservation.",
     url: "https://github.com/furkanndev/Social-Saver",
     downloadUrl: "https://github.com/furkanndev/Social-Saver/releases/tag/v1.0",
     img: "img/keystone_tweaks.png"
@@ -170,7 +170,8 @@ function updateMonitorView(idx, triggerSnow = true) {
   });
 }
 
-function applyRepoVersion(repoName, version, downloadUrl) {
+function applyRepoVersion(repoName, rawVersion, downloadUrl) {
+  const version = rawVersion.replace(/^pro-/i, "");
   if (!version) return;
 
   // 1. Workstation Frame OSD badge
@@ -203,7 +204,7 @@ function applyRepoVersion(repoName, version, downloadUrl) {
     } else if (repoName === "KeyStone") {
       el.innerHTML = `Keystone Platform ${version} &mdash; Windows Post-Install Deployment`;
     } else if (repoName === "Social-Saver") {
-      el.innerHTML = `Social-Saver Pipeline ${version} &mdash; Media Stream Interceptor`;
+      el.innerHTML = `Social-Saver Pipeline ${version} &mdash; Media Downloader`;
     } else {
       el.innerHTML = `${repoName} ${version} &mdash; Active Release`;
     }
