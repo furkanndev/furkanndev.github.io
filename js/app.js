@@ -39,7 +39,7 @@ const PROJECTS = [
     desc: "Flask-based media downloader with HTTP session management, in-memory .zip packaging, and original quality preservation.",
     url: "https://github.com/furkanndev/Social-Saver",
     downloadUrl: "https://github.com/furkanndev/Social-Saver/releases/tag/v1.0",
-    img: "img/keystone_tweaks.png"
+    img: null
   },
   {
     num: "04",
@@ -50,7 +50,7 @@ const PROJECTS = [
     desc: "Zero-overhead Linux background daemon persistently auditing filesystem directory changes across 6 POSIX event categories with monotonic sequence logging.",
     url: "https://github.com/furkanndev/DirectoryChangeMonitorService",
     downloadUrl: null,
-    img: "img/keystone_backup.png"
+    img: null
   },
   {
     num: "05",
@@ -61,7 +61,7 @@ const PROJECTS = [
     desc: "Interactive 2D naval arcade game featuring decoupled domain architecture (Savas.Library / Savas.Desktop), interface contracts, 60 FPS loop, and leaderboards.",
     url: "https://github.com/furkanndev/NavalStrike",
     downloadUrl: null,
-    img: "img/aurapdf_edit.png"
+    img: null
   },
   {
     num: "06",
@@ -72,7 +72,7 @@ const PROJECTS = [
     desc: "Tactical Cartesian deduction puzzle on a dynamic 20x20 matrix with algorithmic procedural target seeding and colorized ANSI fog-of-war terminal rendering.",
     url: "https://github.com/furkanndev/HiddenObjectsGame",
     downloadUrl: null,
-    img: "img/aurapdf_hero.png"
+    img: null
   },
   {
     num: "07",
@@ -83,7 +83,7 @@ const PROJECTS = [
     desc: "High-performance linear algebra engine for randomized 5x5 matrix generation, in-place coordinate scalar swaps, and O(n^3) classical dot product computation.",
     url: "https://github.com/furkanndev/MatrixManipulator",
     downloadUrl: null,
-    img: "img/keystone_apps.png"
+    img: null
   },
   {
     num: "08",
@@ -94,7 +94,7 @@ const PROJECTS = [
     desc: "Warehouse product allocation and dealer traversal simulation in C++ using memory pointer tracking, inventory balance auditing, and orders.txt logging.",
     url: "https://github.com/furkanndev/DealerDistribution",
     downloadUrl: null,
-    img: "img/keystone_tweaks.png"
+    img: null
   },
   {
     num: "09",
@@ -105,7 +105,7 @@ const PROJECTS = [
     desc: "Dynamic tour passenger seating management system implementing custom Stack and List structures for row-by-row seat management across multi-bus fleets.",
     url: "https://github.com/furkanndev/BusPassengerAllocation",
     downloadUrl: null,
-    img: "img/keystone_backup.png"
+    img: null
   },
   {
     num: "10",
@@ -116,7 +116,7 @@ const PROJECTS = [
     desc: "Numerical precision conversion utility converting arbitrary inputs to 32-bit single precision and 64-bit double precision IEEE 754 standard binary strings.",
     url: "https://github.com/furkanndev/IEEE754-Converter",
     downloadUrl: null,
-    img: "img/aurapdf_edit.png"
+    img: null
   }
 ];
 
@@ -136,7 +136,6 @@ function updateMonitorView(idx, triggerSnow = true) {
   const monDesc = document.getElementById("monDesc");
   const monLink = document.getElementById("monLink");
   const monDownload = document.getElementById("monDownload");
-  const monImg = document.getElementById("monImg");
   const monSnow = document.getElementById("monSnow");
   const prows = document.querySelectorAll(".prow");
 
@@ -146,7 +145,7 @@ function updateMonitorView(idx, triggerSnow = true) {
     monSnow.classList.add("burst");
   }
 
-  if (monImg) monImg.src = p.img;
+  renderMonitorMedia(p);
   if (monNum) monNum.textContent = p.num;
   if (monTitle) monTitle.textContent = p.title;
   if (monTag) {
@@ -168,6 +167,137 @@ function updateMonitorView(idx, triggerSnow = true) {
   prows.forEach((row, i) => {
     row.classList.toggle("on", i === idx);
   });
+}
+
+// Shows the project's newest screenshot, or its README on a terminal card when it has none
+function renderMonitorMedia(p) {
+  const monImg = document.getElementById("monImg");
+  const shot = p.shots?.[0] || p.img;
+  if (!monImg) return;
+  if (!shot) {
+    renderMonitorSignal(p);
+    return;
+  }
+  monImg.hidden = false;
+  document.getElementById("monSignal").hidden = true;
+  if (monImg.getAttribute("src") !== shot) monImg.src = shot;
+}
+
+function renderMonitorSignal(p) {
+  const monImg = document.getElementById("monImg");
+  const monSignal = document.getElementById("monSignal");
+  const body = p.readme?.length ? p.readme.join("\n") : "NO SIGNAL";
+  monImg.hidden = true;
+  monSignal.hidden = false;
+  monSignal.textContent = `$ cat ${p.repo}/README.md\n\n${body}`;
+}
+
+function buildProjectRow(p, idx) {
+  const row = document.createElement("li");
+  row.className = "prow";
+  row.dataset.index = idx;
+  row.dataset.repo = p.repo;
+
+  const num = document.createElement("span");
+  num.className = "pn";
+  num.textContent = p.num;
+
+  const title = document.createElement("div");
+  title.className = "pt";
+  title.textContent = p.title;
+  if (p.version) {
+    const tag = document.createElement("span");
+    tag.className = "repo-ver-tag";
+    tag.dataset.repoTag = p.repo;
+    tag.textContent = p.version;
+    title.append(" ", tag);
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "pmeta";
+  meta.textContent = p.tag;
+
+  const note = document.createElement("div");
+  note.className = "pnote";
+  note.textContent = p.desc;
+
+  const copy = document.createElement("div");
+  copy.append(title, meta, note);
+
+  const go = document.createElement("a");
+  go.className = "pgo";
+  go.href = p.url;
+  go.target = "_blank";
+  go.rel = "noopener noreferrer";
+  go.textContent = "repo →";
+
+  row.append(num, copy, go);
+  return row;
+}
+
+function renderProjectRows() {
+  const list = document.getElementById("projList");
+  if (list) list.replaceChildren(...PROJECTS.map(buildProjectRow));
+  document.querySelectorAll("[data-repo-count]").forEach((el) => {
+    el.textContent = String(PROJECTS.length);
+  });
+}
+
+// Swaps a static screenshot for the live one only after it has loaded
+function applyLiveShots() {
+  document.querySelectorAll("[data-live-shot]").forEach((img) => {
+    const shots = PROJECTS.find((p) => p.repo === img.dataset.liveShot)?.shots;
+    if (!shots?.length) return;
+    const url = shots[Number(img.dataset.shotIndex)] || shots[0];
+    if (img.dataset.liveSrc === url) return;
+    const loader = new Image();
+    loader.onload = () => {
+      img.src = url;
+      img.dataset.liveSrc = url;
+    };
+    loader.src = url;
+  });
+}
+
+// Called by live.js: `repos` is the public repository list, newest push first
+function applyLiveProjects(repos, media = {}) {
+  const activeRepo = PROJECTS[activeProjectIdx]?.repo;
+  const orderBefore = PROJECTS.map((p) => p.repo).join();
+
+  if (repos?.length) {
+    const known = new Map(PROJECTS.map((p) => [p.repo, p]));
+    const live = repos.map((r) => {
+      const p = known.get(r.name) || {
+        title: r.name,
+        repo: r.name,
+        version: null,
+        tag: r.language || "Repository",
+        desc: "",
+        url: `https://github.com/${GITHUB_USERNAME}/${r.name}`,
+        downloadUrl: null,
+        img: null
+      };
+      p.desc = p.desc || r.description || "";
+      return p;
+    });
+    PROJECTS.splice(0, PROJECTS.length, ...live);
+  }
+
+  PROJECTS.forEach((p, i) => {
+    const info = media[p.repo];
+    p.num = String(i + 1).padStart(2, "0");
+    if (info) {
+      p.shots = info.shots;
+      p.readme = info.excerpt;
+      p.desc = p.desc || info.summary;
+    }
+    p.desc = p.desc || "Public repository.";
+  });
+
+  activeProjectIdx = Math.max(0, PROJECTS.findIndex((p) => p.repo === activeRepo));
+  if (PROJECTS.map((p) => p.repo).join() !== orderBefore) renderProjectRows();
+  updateMonitorView(activeProjectIdx, false);
+  applyLiveShots();
 }
 
 function applyRepoVersion(repoName, rawVersion, downloadUrl) {
@@ -418,15 +548,20 @@ document.addEventListener("DOMContentLoaded", () => {
   initAutonomousVersionSync();
 
   // Interactive Monitor Feed Switching
-  const prows = document.querySelectorAll(".prow");
-  prows.forEach((row) => {
-    row.addEventListener("mouseenter", () => {
-      const idx = parseInt(row.dataset.index, 10);
-      if (!isNaN(idx)) {
-        activeProjectIdx = idx;
-        updateMonitorView(idx, true);
-      }
-    });
+  // Rows are rebuilt from live data, so the list owns the listeners
+  const selectRow = (event) => {
+    const idx = parseInt(event.target.closest(".prow")?.dataset.index, 10);
+    if (!isNaN(idx) && idx !== activeProjectIdx) {
+      activeProjectIdx = idx;
+      updateMonitorView(idx, true);
+    }
+  };
+  const projList = document.getElementById("projList");
+  projList.addEventListener("mouseover", selectRow);
+  projList.addEventListener("click", selectRow);
+
+  document.getElementById("monImg").addEventListener("error", () => {
+    renderMonitorSignal(PROJECTS[activeProjectIdx]);
   });
 
   // Navigation Active Link Tracking

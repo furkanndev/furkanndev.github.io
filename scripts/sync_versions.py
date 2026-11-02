@@ -168,6 +168,9 @@ def update_static_html(html_path: str, versions_data: dict) -> bool:
         if not ver:
             continue
 
+        # Release tags such as Pro-v2.2.6 are displayed without their prefix
+        ver = re.sub(r"^pro-", "", ver, flags=re.IGNORECASE)
+
         print(f"[*] Applying version for {repo_name}: {ver}")
 
         # 1. Workstation Frame OSD badge: data-repo-osd="{repo}"

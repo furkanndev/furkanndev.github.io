@@ -1,18 +1,23 @@
 // ==============================================================================
-// Live GitHub Feed — activity stream, repository metadata and telemetry
+// Live GitHub Feed — activity stream, repository list, README media and telemetry
 // Falls back to the local cache, then to the static HTML, when the API is out of reach.
 // ==============================================================================
 
 (() => {
   const USER = "furkanndev";
   const API = "https://api.github.com";
-  const CACHE_KEY = "furkanndev_live_v2";
+  const RAW = "https://raw.githubusercontent.com";
+  const CACHE_KEY = "furkanndev_live_v3";
   const TTL_MS = 15 * 60 * 1000;
   const TICK_MS = 60 * 1000;
   const MAX_ITEMS = 5;
   const MAX_COMMIT_LOOKUPS = 4;
   const HIDDEN_REPOS = new Set([USER, `${USER}.github.io`]);
   const NOISE = /^(merge|chore|wip|bump)\b/i;
+  const MAX_SHOTS = 8;
+  const MAX_EXCERPT_LINES = 6;
+  const NOT_A_SCREENSHOT = /shields\.io|badge|app_icon|logo|\.svg(\?|$)/i;
+  const IMAGE_REFS = /!\[[^\]]*\]\(([^)\s]+)|<img[^>]+src=["']([^"']+)/g;
 
   const relative = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
   const UNITS = [
@@ -120,6 +125,57 @@
     return items.slice(0, MAX_ITEMS);
   }
 
+  function plainLine(line) {
+    return line
+      .replace(/<[^>]+>/g, "")
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/^[#>\-*\s]+/, "")
+      .replace(/[*_`]/g, "")
+      .trim();
+  }
+
+  function readmeText(markdown) {
+    const lines = [];
+    let inCode = false;
+    for (const raw of markdown.split(/\r?\n/)) {
+      if (raw.trim().startsWith("```")) {
+        inCode = !inCode;
+        continue;
+      }
+      if (inCode || /^\s*(<|!\[|\||\[!|---)/.test(raw)) continue;
+      const line = plainLine(raw);
+      if (line) lines.push(line);
+    }
+    return lines;
+  }
+
+  function parseReadme(repo, markdown) {
+    const base = `${RAW}/${USER}/${repo}/HEAD/`;
+    const shots = [...markdown.matchAll(IMAGE_REFS)]
+      .map((match) => new URL(match[1] || match[2], base).href)
+      .filter((url) => url.startsWith("https://") && !NOT_A_SCREENSHOT.test(url));
+    const text = readmeText(markdown);
+    return {
+      shots: [...new Set(shots)].slice(0, MAX_SHOTS),
+      excerpt: text.slice(0, MAX_EXCERPT_LINES).map((line) => line.slice(0, 76)),
+      summary: (text.find((line) => line.length > 40) || "").slice(0, 220)
+    };
+  }
+
+  // raw.githubusercontent.com does not count against the API rate limit
+  async function fetchMedia(repos) {
+    const media = {};
+    await Promise.all(repos.map(async (repo) => {
+      try {
+        const resp = await fetch(`${RAW}/${USER}/${repo}/HEAD/README.md`);
+        if (resp.ok) media[repo] = parseReadme(repo, await resp.text());
+      } catch (e) {
+        // Network failure: the repo keeps its static card
+      }
+    }));
+    return media;
+  }
+
   async function fetchLive() {
     const [user, repos, events] = await Promise.all([
       getJson(`/users/${USER}`),
@@ -145,7 +201,8 @@
         lastRelease: lastRelease ? lastRelease.at : null
       },
       meta,
-      feed
+      feed,
+      list: shown.map((r) => ({ name: r.name, language: r.language, description: r.description }))
     };
   }
 
@@ -218,6 +275,7 @@
   }
 
   function render(data) {
+    applyLiveProjects(data.list, data.media);
     if (!data.fetchedAt) return;
     renderStats(data.stats);
     renderRepos(data.meta);
@@ -235,18 +293,17 @@
     if (state.fetchedAt && now - state.fetchedAt < TTL_MS) return;
 
     refreshing = true;
+    let next = state;
     try {
-      state = await fetchLive();
-      writeCache(state);
-      render(state);
+      next = await fetchLive();
     } catch (e) {
-      if (e.status === 403 || e.status === 429) {
-        state = { ...state, retryAt: now + TTL_MS };
-        writeCache(state);
-      }
-    } finally {
-      refreshing = false;
+      if (e.status === 403 || e.status === 429) next = { ...state, retryAt: now + TTL_MS };
     }
+    const repos = next.list?.map((r) => r.name) || PROJECTS.map((p) => p.repo);
+    state = { ...next, media: { ...state.media, ...await fetchMedia(repos) } };
+    writeCache(state);
+    render(state);
+    refreshing = false;
   }
 
   render(state);

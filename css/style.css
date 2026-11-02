@@ -505,6 +505,24 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
   object-fit: cover;
   object-position: top left;
 }
+.monitor-media img[hidden] { display: none; }
+.mon-signal {
+  margin: 0;
+  height: 100%;
+  padding: 18px 20px;
+  overflow: hidden;
+  white-space: pre-wrap;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--cyan);
+  background:
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%) 0 0 / 100% 4px,
+    radial-gradient(90% 90% at 50% 20%, rgba(79, 227, 255, 0.09), transparent 70%),
+    #090B0E;
+  text-shadow: 0 0 8px rgba(79, 227, 255, 0.4);
+}
+.mon-signal[hidden] { display: none; }
 .monitor-overlay {
   position: absolute;
   inset: 0;
@@ -551,7 +569,6 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
   background-color: #0E1015;
 }
 .monitor-snow.burst {
-  opacity: 0.85;
   animation: snowBurst 0.18s steps(2, end) 1;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='2'/></filter><rect width='80' height='80' filter='url(%23s)'/></svg>");
 }
@@ -787,4 +804,68 @@ h1, h2, h3 { margin: 0; font-weight: 400; }
   font-family: var(--mono);
   font-size: 11px;
   color: var(--dim);
+}
+
+/* Broadcast mascot: a tiny CRT that lives on top of the channel bug */
+.mascot {
+  position: absolute;
+  right: 12px;
+  bottom: 100%;
+  width: 96px;
+  height: 72px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.mascot-svg { display: block; width: 100%; height: 100%; overflow: hidden; }
+.m-laptop { transform: translateY(12px); transition: transform 0.5s steps(5, end); }
+.m-lid { transform: scaleY(0.17); transform-origin: 16px 22px; transition: transform 0.4s steps(4, end); }
+.m-arm { transition: transform 0.3s steps(3, end); }
+.m-code, .m-glow { opacity: 0; }
+
+.m-body { animation: mIdle 3.2s steps(2, end) infinite; }
+.m-eyes { animation: mBlink 5.3s steps(1, end) infinite; transform-origin: 16px 12px; }
+.m-tip { animation: rec 1.9s steps(1, end) infinite; }
+@keyframes mIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(1px); } }
+@keyframes mBlink { 0%, 93%, 100% { transform: scaleY(1); } 94%, 97% { transform: scaleY(0.2); } }
+
+.mascot.is-fetching .m-arm { transform: translateY(3px); }
+.mascot.is-fetching .m-laptop { transform: translateY(0); }
+.mascot.is-open .m-lid { transform: scaleY(1); }
+.mascot.is-coding .m-body { animation: none; }
+.mascot.is-coding .m-eyes { animation: none; transform: translateY(2px) scaleY(0.5); }
+.mascot.is-coding .m-glow { opacity: 1; }
+.mascot.is-coding .m-code { opacity: 1; animation: mScroll 1s steps(3, end) infinite; }
+.mascot.is-coding .m-arm { animation: mType 0.28s steps(2, end) infinite; }
+.mascot.is-coding .m-arm-r { animation-delay: 0.14s; }
+@keyframes mScroll { to { transform: translateY(-3px); } }
+@keyframes mType { 0%, 100% { transform: translateY(3px); } 50% { transform: translateY(4px); } }
+
+.mascot-bubble {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
+  min-height: 24px;
+  max-width: 260px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--cyan);
+  background: rgba(8, 8, 10, 0.92);
+  border: 1px solid var(--hair);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.mascot.is-coding .mascot-bubble { opacity: 1; }
+.mascot-bubble::after { content: "\2588"; margin-left: 2px; color: var(--brass-hi); animation: rec 1s steps(1, end) infinite; }
+
+@media (max-width: 720px) {
+  .mascot { width: 64px; height: 48px; right: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot *, .mascot { animation: none !important; transition: none !important; }
 }
