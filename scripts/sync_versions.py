@@ -311,6 +311,10 @@ def main():
     print(f"[*] Starting Repository & Release Synchronization in {base_dir}")
     versions_data = fetch_repo_data(existing_data, token)
 
+    # A new timestamp alone is not a change worth committing
+    if existing_data and all(versions_data[key] == existing_data.get(key) for key in ("user", "repos")):
+        versions_data["updated_at"] = existing_data.get("updated_at")
+
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(versions_data, f, indent=2, ensure_ascii=False)
     print(f"[+] Snapshot written to {json_path}")
