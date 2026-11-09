@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-08T16:26:20.705684+00:00",
+  "updated_at": "2026-11-09T01:17:33.515054+00:00",
   "user": {
     "login": "furkanndev",
     "public_repos": 21,
@@ -19,12 +19,12 @@
     "KeyStone": {
       "repo": "KeyStone",
       "has_release": true,
-      "latest_version": "v3.1.1",
-      "release_name": "v3.1.1",
-      "release_url": "https://github.com/furkanndev/KeyStone/releases/tag/v3.1.1",
-      "download_url": "https://github.com/furkanndev/KeyStone/releases/download/v3.1.1/keystone-linux-x64",
+      "latest_version": "v3.1.2",
+      "release_name": "v3.1.2",
+      "release_url": "https://github.com/furkanndev/KeyStone/releases/tag/v3.1.2",
+      "download_url": "https://github.com/furkanndev/KeyStone/releases/download/v3.1.2/keystone-linux-x64",
       "asset_name": "keystone-linux-x64",
-      "published_at": "2026-11-03T23:55:52Z"
+      "published_at": "2026-11-08T22:37:38Z"
     },
     "Social-Saver": {
       "repo": "Social-Saver",
