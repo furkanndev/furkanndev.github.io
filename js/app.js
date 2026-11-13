@@ -169,27 +169,42 @@ function updateMonitorView(idx, triggerSnow = true) {
   });
 }
 
-// Shows the project's newest screenshot, or its README on a terminal card when it has none
+// Cycles through every screenshot the project has, or shows its README on a terminal card when it has none
+let monitorShow = null;
+
+function ensureMonitorShow() {
+  if (!monitorShow) {
+    monitorShow = new Slideshow(document.querySelector(".monitor-media"), {
+      adopt: document.getElementById("monImg"),
+      onEmpty: () => renderMonitorSignal(PROJECTS[activeProjectIdx])
+    });
+  }
+  return monitorShow;
+}
+
 function renderMonitorMedia(p) {
-  const monImg = document.getElementById("monImg");
-  const shot = p.shots?.[0] || p.img;
-  if (!monImg) return;
-  if (!shot) {
+  const show = ensureMonitorShow();
+  const urls = p.shots?.length ? p.shots : [p.img].filter(Boolean);
+  if (!urls.length) {
     renderMonitorSignal(p);
     return;
   }
-  monImg.hidden = false;
   document.getElementById("monSignal").hidden = true;
-  if (monImg.getAttribute("src") !== shot) monImg.src = shot;
+  show.stack.hidden = false;
+  show.set(urls, 0, p.title);
 }
 
 function renderMonitorSignal(p) {
-  const monImg = document.getElementById("monImg");
+  const show = ensureMonitorShow();
   const monSignal = document.getElementById("monSignal");
-  const body = p.readme?.length ? p.readme.join("\n") : "NO SIGNAL";
-  monImg.hidden = true;
+  const body = p?.readme?.length ? p.readme.join("\n") : "NO SIGNAL";
+  show.token += 1; // drop any image load still in flight
+  show.urls = [];
+  show.stack.hidden = true;
+  show.dots.hidden = true;
+  show.restart();
   monSignal.hidden = false;
-  monSignal.textContent = `$ cat ${p.repo}/README.md\n\n${body}`;
+  monSignal.textContent = `$ cat ${p?.repo}/README.md\n\n${body}`;
 }
 
 function buildProjectRow(p, idx) {
@@ -243,19 +258,19 @@ function renderProjectRows() {
   });
 }
 
-// Swaps a static screenshot for the live one only after it has loaded
+// Turns each flagship screenshot frame into a slideshow of the repo's README images
 function applyLiveShots() {
-  document.querySelectorAll("[data-live-shot]").forEach((img) => {
-    const shots = PROJECTS.find((p) => p.repo === img.dataset.liveShot)?.shots;
-    if (!shots?.length) return;
-    const url = shots[Number(img.dataset.shotIndex)] || shots[0];
-    if (img.dataset.liveSrc === url) return;
-    const loader = new Image();
-    loader.onload = () => {
-      img.src = url;
-      img.dataset.liveSrc = url;
-    };
-    loader.src = url;
+  document.querySelectorAll(".workstation-frame img[data-live-shot]").forEach((img) => {
+    const frame = img.closest(".workstation-frame");
+    frame.dataset.liveShot = img.dataset.liveShot;
+    frame.dataset.shotIndex = img.dataset.shotIndex;
+    frame.dataset.shotAlt = img.alt;
+    frame.slideshow = new Slideshow(frame, { adopt: img });
+    delete img.dataset.liveShot;
+  });
+  document.querySelectorAll(".workstation-frame[data-live-shot]").forEach((frame) => {
+    const shots = PROJECTS.find((p) => p.repo === frame.dataset.liveShot)?.shots;
+    if (shots?.length) frame.slideshow.set(shots, Number(frame.dataset.shotIndex) || 0, frame.dataset.shotAlt);
   });
 }
 
@@ -559,10 +574,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const projList = document.getElementById("projList");
   projList.addEventListener("mouseover", selectRow);
   projList.addEventListener("click", selectRow);
-
-  document.getElementById("monImg").addEventListener("error", () => {
-    renderMonitorSignal(PROJECTS[activeProjectIdx]);
-  });
 
   // Navigation Active Link Tracking
   const sections = document.querySelectorAll("section[id], footer[id]");
